@@ -1,0 +1,5 @@
+<Weavers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="FodyWeavers.xsd">
+  <Costura DisableCompression='false' IncludeDebugSymbols='false' DisableCleanup='true'>
+    <Unmanaged64Assemblies>Interop</Unmanaged64Assemblies>
+  </Costura>
+</Weavers>

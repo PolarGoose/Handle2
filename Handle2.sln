@@ -1,0 +1,52 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34330.188
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test", "src\Test\Test.csproj", "{D57C5C4B-3FE1-415E-92F8-A345DF5679AC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Files", "Files", "{ECE2889E-C492-446E-82C2-022D6029A2BB}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		build.ps1 = build.ps1
+		Directory.Build.props = Directory.Build.props
+		.github\workflows\main.yaml = .github\workflows\main.yaml
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Handle2", "src\Handle2\Handle2.csproj", "{FABFDFC5-D060-4A71-B0E7-DC9D339F0856}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D57C5C4B-3FE1-415E-92F8-A345DF5679AC}.Debug|x64.ActiveCfg = Debug|x64
+		{D57C5C4B-3FE1-415E-92F8-A345DF5679AC}.Debug|x64.Build.0 = Debug|x64
+		{D57C5C4B-3FE1-415E-92F8-A345DF5679AC}.Debug|x86.ActiveCfg = Debug|x64
+		{D57C5C4B-3FE1-415E-92F8-A345DF5679AC}.Debug|x86.Build.0 = Debug|x64
+		{D57C5C4B-3FE1-415E-92F8-A345DF5679AC}.Release|x64.ActiveCfg = Release|x64
+		{D57C5C4B-3FE1-415E-92F8-A345DF5679AC}.Release|x64.Build.0 = Release|x64
+		{D57C5C4B-3FE1-415E-92F8-A345DF5679AC}.Release|x86.ActiveCfg = Release|x64
+		{D57C5C4B-3FE1-415E-92F8-A345DF5679AC}.Release|x86.Build.0 = Release|x64
+		{FABFDFC5-D060-4A71-B0E7-DC9D339F0856}.Debug|x64.ActiveCfg = Debug|x64
+		{FABFDFC5-D060-4A71-B0E7-DC9D339F0856}.Debug|x64.Build.0 = Debug|x64
+		{FABFDFC5-D060-4A71-B0E7-DC9D339F0856}.Debug|x86.ActiveCfg = Debug|x64
+		{FABFDFC5-D060-4A71-B0E7-DC9D339F0856}.Debug|x86.Build.0 = Debug|x64
+		{FABFDFC5-D060-4A71-B0E7-DC9D339F0856}.Release|x64.ActiveCfg = Release|x64
+		{FABFDFC5-D060-4A71-B0E7-DC9D339F0856}.Release|x64.Build.0 = Release|x64
+		{FABFDFC5-D060-4A71-B0E7-DC9D339F0856}.Release|x86.ActiveCfg = Release|x64
+		{FABFDFC5-D060-4A71-B0E7-DC9D339F0856}.Release|x86.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {729412BC-986E-47AD-B486-9798934F437F}
+	EndGlobalSection
+EndGlobal

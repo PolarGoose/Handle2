@@ -1,0 +1,5 @@
+/build/
+.vs/
+.idea/
+CMakeSettings.json
+launchSettings.json
