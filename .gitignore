@@ -1,0 +1,4 @@
+/out/
+.vs/
+.idea/
+CMakeSettings.json

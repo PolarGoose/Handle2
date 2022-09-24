@@ -1,0 +1,21 @@
+on: push
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ilammy/msvc-dev-cmd@v1
+      - run: ./build.ps1
+      - uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          draft: true
+          files: out/publish/*.zip
+          fail_on_unmatched_files: true
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Build artifacts
+          path: out/publish/*.zip

@@ -1,0 +1,6 @@
+# https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+# https://zed0.co.uk/clang-format-configurator/
+BasedOnStyle: LLVM
+CompactNamespaces: true
+FixNamespaceComments: false
+PointerAlignment: Left

@@ -1,0 +1,25 @@
+#pragma once
+
+#include <WTypesbase.h>
+#include <Windows.h>
+#include <algorithm>
+#include <array>
+#include <basetsd.h>
+#include <codecvt>
+#include <cstdio>
+#include <filesystem>
+#include <format>
+#include <fstream>
+#include <iostream>
+#include <json.hpp>
+#include <map>
+#include <memory>
+#include <processthreadsapi.h>
+#include <span>
+#include <sstream>
+#include <string>
+#include <string_view>
+#include <tchar.h>
+#include <tlhelp32.h>
+#include <winternl.h>
+#include <wtypes.h>
