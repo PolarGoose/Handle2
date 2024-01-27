@@ -2,18 +2,46 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClInclude Include="pch.h" />
+    <ClInclude Include="utils\device_path_to_drive_path_converter.h" />
+    <ClInclude Include="utils\noncopyable.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\preprocessor.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\scoped_handle.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\string_conversion.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\exception.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="ntdll\ntdll_functions.h">
+      <Filter>ntdll</Filter>
+    </ClInclude>
+    <ClInclude Include="ntdll\winternl_extensions.h">
+      <Filter>ntdll</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\api.h">
+      <Filter>interface</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AssemblyInfo.cpp" />
-    <ClCompile Include="Interop.cpp" />
+    <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="pch.cpp" />
+    <ClCompile Include="api.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="Interface">
-      <UniqueIdentifier>{2e954e9a-69b4-49fd-8e5e-01e44172b92c}</UniqueIdentifier>
+    <Filter Include="interface">
+      <UniqueIdentifier>{f5126604-cefe-472d-aa06-d9e1745532b4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Utils">
-      <UniqueIdentifier>{dc724d43-a3e7-4838-9e80-8ea913293510}</UniqueIdentifier>
+    <Filter Include="utils">
+      <UniqueIdentifier>{df10ab7c-79ee-4641-a59e-20a97a3172b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ntdll">
+      <UniqueIdentifier>{c4b63bac-c53c-42a8-9362-1a8128b7e211}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

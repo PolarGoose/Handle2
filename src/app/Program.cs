@@ -1,2 +1,1 @@
-var c = new Interop.MyHelloWorld();
-c.HelloWorld();
+Console.WriteLine("Hello");
