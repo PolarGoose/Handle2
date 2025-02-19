@@ -172,7 +172,7 @@ public static class NtDll
 
         try
         {
-            var name = (UNICODE_STRING)Marshal.PtrToStructure(buffer, typeof(UNICODE_STRING));
+            var name = (UNICODE_STRING)Marshal.PtrToStructure(buffer, typeof(UNICODE_STRING))!;
             return name.Length > 0 ? Marshal.PtrToStringUni(name.Buffer, name.Length / 2) : null;
         }
         finally
@@ -235,7 +235,7 @@ public static class NtDll
 
         try
         {
-            var info = (OBJECT_TYPE_INFORMATION)Marshal.PtrToStructure(buffer, typeof(OBJECT_TYPE_INFORMATION));
+            var info = (OBJECT_TYPE_INFORMATION)Marshal.PtrToStructure(buffer, typeof(OBJECT_TYPE_INFORMATION))!;
             return info.Name.Length > 0 ? Marshal.PtrToStringUni(info.Name.Buffer, info.Name.Length / 2) : string.Empty;
         }
         finally

@@ -170,10 +170,12 @@ public class WinApi
         SecurityAnonymous = 0x00100000
     }
 
-    [DllImport("kernel32.dll", SetLastError = true)]
-    public static extern SafeFileHandle ReOpenFile(
-        SafeFileHandle hOriginalFile,
-        FileDesiredAccess dwDesiredAccess,
-        FileShare dwShareMode,
-        FileFlagsAndAttributes dwFlagsAndAttributes);
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    public static extern bool QueryFullProcessImageName(
+        SafeProcessHandle hProcess,
+        int dwFlags,
+        StringBuilder? lpExeName,
+        ref int lpdwSize);
+
+    public const int ERROR_INSUFFICIENT_BUFFER = 122;
 }

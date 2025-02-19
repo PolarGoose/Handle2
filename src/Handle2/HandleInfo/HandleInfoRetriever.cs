@@ -40,7 +40,7 @@ public record struct ProcessInfo(
     string? ProcessExecutablePath,
     string? UserName,
     string? DomainName,
-    List<HandleInfo> Handles);
+    IEnumerable<HandleInfo> Handles);
 
 public static class HandleInfoRetriever
 {
@@ -68,54 +68,82 @@ public static class HandleInfoRetriever
         var currentProcess = WinApi.GetCurrentProcess();
         var result = new List<ProcessInfo>();
 
-        foreach (var (pid, handles) in QuerySystemHandleInformation())
+        var processes = QuerySystemHandleInformation().Select(processAndHandles => (processAndHandles.Key, processAndHandles.ToArray())).ToArray();
+        var currentProcessIndex = 0;
+        var currentHandleIndex = 0;
+        SafeProcessHandle? currentOpenedProcess = null;
+        var currentHandles = new List<HandleInfo>();
+        SafeFileHandle? currentDupHandle = null;
+
+        while (currentProcessIndex < processes.Length)
         {
-            using var openedProcess = ProcessUtils.OpenProcessToDuplicateHandle(pid);
-            if (openedProcess is null)
+            new WorkerThreadWithDeadLockDetection(TimeSpan.FromMilliseconds(50), watchdog =>
             {
-                continue;
-            }
-
-            var processInfo = new ProcessInfo
-            {
-                Pid = pid.ToUInt64(),
-                Handles = []
-            };
-
-            foreach (var h in handles)
-            {
-                using var dupHandle = WinApi.DuplicateHandle(currentProcess, openedProcess, h);
-                if (dupHandle.IsInvalid)
+                while (currentProcessIndex < processes.Length)
                 {
-                    continue;
-                }
+                    var (pid, handles) = processes[currentProcessIndex];
 
-                var handle = new HandleInfo
-                {
-                    GrantedAccess = h.GrantedAccess,
-                    Attributes = h.HandleAttributes,
-                    AddressInTheKernelMemory = (ulong)h.Object.ToInt64(),
-                    HandleType = NtDll.GetHandleType(dupHandle)
-                };
-
-                if (handle.HandleType is not null)
-                {
-                    var task = Task.Run(() =>
+                    if (currentOpenedProcess is null)
                     {
-                        AddHandleTypeAndNameInfo(dupHandle, ref handle);
-                    });
-                    task.Wait(TimeSpan.FromMilliseconds(300));
+                        currentOpenedProcess = ProcessUtils.OpenProcessToDuplicateHandle(pid);
+                        if (currentOpenedProcess is null)
+                        {
+                            currentProcessIndex++;
+                            continue;
+                        }
+
+                        currentHandles = new List<HandleInfo>();
+                        currentHandleIndex = 0;
+                    }
+
+                    while (currentHandleIndex < handles.Length)
+                    {
+                        currentDupHandle?.Dispose();
+                        var h = handles[currentHandleIndex];
+                        currentHandleIndex++;
+
+                        currentDupHandle = WinApi.DuplicateHandle(currentProcess, currentOpenedProcess, h);
+                        if (currentDupHandle.IsInvalid)
+                        {
+                            continue;
+                        }
+
+                        var handle = new HandleInfo
+                        {
+                            GrantedAccess = h.GrantedAccess,
+                            Attributes = h.HandleAttributes,
+                            AddressInTheKernelMemory = (ulong)h.Object.ToInt64(),
+                            HandleType = NtDll.GetHandleType(currentDupHandle)
+                        };
+
+                        if (handle.HandleType is not null)
+                        {
+                            watchdog.Arm();
+                            AddHandleTypeAndNameInfo(currentDupHandle, ref handle);
+                            watchdog.Disarm();
+                        }
+
+                        currentHandles.Add(handle);
+                    }
+
+                    if (currentHandles.Any())
+                    {
+                        var procInfo = new ProcessInfo
+                        {
+                            Pid = pid.ToUInt64(),
+                            Handles = currentHandles
+                        };
+                        (procInfo.DomainName, procInfo.UserName) = ProcessUtils.GetOwnerDomainAndUserNames(currentOpenedProcess);
+                        procInfo.ProcessExecutablePath = ProcessUtils.GetProcessExeFullName(currentOpenedProcess);
+                        result.Add(procInfo);
+                    }
+
+                    currentDupHandle?.Dispose();
+                    currentOpenedProcess.Dispose();
+                    currentOpenedProcess = null;
+                    currentProcessIndex++;
                 }
-
-                processInfo.Handles.Add(handle);
-            }
-
-            if (processInfo.Handles.Any())
-            {
-                (processInfo.DomainName, processInfo.UserName) = ProcessUtils.GetOwnerDomainAndUserNames(openedProcess);
-                processInfo.ProcessExecutablePath = ProcessUtils.GetExecutablePath(pid);
-                result.Add(processInfo);
-            }
+            }).Run();
         }
 
         return result;
@@ -123,66 +151,25 @@ public static class HandleInfoRetriever
 
     public static IEnumerable<ProcessInfo> GetProcInfosLockingPath(string path)
     {
-        var currentProcess = WinApi.GetCurrentProcess();
-        var result = new List<ProcessInfo>();
         path = FileUtils.ToCanonicalPath(path);
+        var allInfos = GetAllProcInfos();
+        var result = new List<ProcessInfo>();
 
-        foreach (var (pid, handles) in QuerySystemHandleInformation())
+        foreach(var info in allInfos)
         {
-            using var openedProcess = ProcessUtils.OpenProcessToDuplicateHandle(pid);
-            if (openedProcess is null)
+            var handles = info.Handles.Where(h => h.FullNameIfItIsAFileOrAFolder?.StartsWith(path, StringComparison.InvariantCultureIgnoreCase) == true);
+            if (handles.Any())
             {
-                continue;
-            }
-
-            var processInfo = new ProcessInfo
-            {
-                Pid = pid.ToUInt64(),
-                Handles = []
-            };
-
-            foreach (var h in handles)
-            {
-                using var dupHandle = WinApi.DuplicateHandle(currentProcess, openedProcess, h);
-                if (dupHandle.IsInvalid)
+                result.Add(new ProcessInfo
                 {
-                    continue;
-                }
-
-                using var reopenedHandle = WinApi.ReOpenFile(dupHandle, WinApi.FileDesiredAccess.None, FileShare.None, WinApi.FileFlagsAndAttributes.None);
-                if (reopenedHandle.IsInvalid)
-                {
-                    continue;
-                }
-
-                var handle = new HandleInfo
-                {
-                    GrantedAccess = h.GrantedAccess,
-                    Attributes = h.HandleAttributes,
-                    AddressInTheKernelMemory = (ulong)h.Object.ToInt64(),
-                    HandleType = NtDll.GetHandleType(reopenedHandle)
-                };
-
-                if (handle.HandleType is not null)
-                {
-                    AddHandleTypeAndNameInfo(reopenedHandle, ref handle);
-                }
-
-                if (handle.FullNameIfItIsAFileOrAFolder?.StartsWith(path, StringComparison.InvariantCultureIgnoreCase) == true)
-                {
-                    processInfo.Handles.Add(handle);
-                }
-            }
-
-            if (processInfo.Handles.Any())
-            {
-                (processInfo.DomainName, processInfo.UserName) = ProcessUtils.GetOwnerDomainAndUserNames(openedProcess);
-                processInfo.ProcessExecutablePath = ProcessUtils.GetExecutablePath(pid);
-
-                result.Add(processInfo);
+                    Pid = info.Pid,
+                    ProcessExecutablePath = info.ProcessExecutablePath,
+                    UserName = info.UserName,
+                    DomainName = info.DomainName,
+                    Handles = handles
+                });
             }
         }
-
         return result;
     }
 }

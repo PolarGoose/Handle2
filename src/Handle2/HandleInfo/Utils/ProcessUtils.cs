@@ -1,7 +1,8 @@
 using Handle2.HandleInfo.Interop;
 using Microsoft.Win32.SafeHandles;
-using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Security.Principal;
+using System.Text;
 
 namespace Handle2.HandleInfo.Utils;
 
@@ -22,18 +23,27 @@ public static class ProcessUtils
         }
     }
 
-    public static string? GetExecutablePath(UIntPtr procId)
+    public static string? GetProcessExeFullName(SafeProcessHandle processHandle)
     {
-        try
+        for (var capacity = 2048; ; capacity *= 2)
         {
-            using var process = Process.GetProcessById((int)procId);
-            return process.MainModule.FileName;
-        }
-        catch (Exception)
-        {
-            return null;
+            var buffer = new StringBuilder(capacity);
+            int size = capacity;
+
+            if (!WinApi.QueryFullProcessImageName(processHandle, 0, buffer, ref size))
+            {
+                int error = Marshal.GetLastWin32Error();
+                if (error != WinApi.ERROR_INSUFFICIENT_BUFFER)
+                {
+                    return null;
+                }
+                continue;
+            }
+
+            return buffer.ToString(0, size);
         }
     }
+
 
     public static SafeProcessHandle? OpenProcessToDuplicateHandle(UIntPtr pid)
     {

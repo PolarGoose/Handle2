@@ -4,6 +4,7 @@ using NUnit.Framework;
 namespace Test.HandleInfo.Utils;
 
 [TestFixture]
+[Parallelizable(scope: ParallelScope.All)]
 internal class FileUtilsTest
 {
     [Test]

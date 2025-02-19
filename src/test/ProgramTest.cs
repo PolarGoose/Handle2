@@ -1,11 +1,13 @@
 using CliWrap;
 using CliWrap.Buffered;
 using NUnit.Framework;
+using NUnit.Framework.Constraints;
 using System.Text;
 
 namespace Test;
 
 [TestFixture]
+[Parallelizable(scope: ParallelScope.All)]
 public class ProgramTest
 {
     [Test]
@@ -33,7 +35,7 @@ public class ProgramTest
     [TestCase(["--dump-all-handles param"])]
     public void Prints_help_and_an_error_message_when_wrong_parameters_are_passed(object[] args)
     {
-        var res = RunHandle2(args.Select(a => a.ToString()));
+        var res = RunHandle2(args.Select(a => a.ToString()!));
 
         Assert.That(res.ExitCode, Is.EqualTo(0));
         Assert.That(res.StandardError, Contains.Substring("console utility that displays"));
@@ -46,11 +48,11 @@ public class ProgramTest
         var res = RunHandle2(["--dump-all-handles"]);
 
         Assert.That(res.ExitCode, Is.EqualTo(0));
-        Assert.That(res.StandardOutput, Contains.Substring(@"C:\Windows\system32\sihost.exe"));
-        Assert.That(res.StandardOutput, Contains.Substring(@"Desktop"));
-        Assert.That(res.StandardOutput, Contains.Substring(@"\Default"));
-        Assert.That(res.StandardOutput, Contains.Substring(@"C:\Windows\System32\"));
-        Assert.That(res.StandardOutput, Contains.Substring(@"C:\Windows\System32\en-US\KernelBase.dll.mui"));
+        Assert.That(res.StandardOutput, ContainsIgnoreCase(@"C:\Windows\system32\sihost.exe"));
+        Assert.That(res.StandardOutput, ContainsIgnoreCase(@"Desktop"));
+        Assert.That(res.StandardOutput, ContainsIgnoreCase(@"\Default"));
+        Assert.That(res.StandardOutput, ContainsIgnoreCase(@"C:\Windows\System32\"));
+        Assert.That(res.StandardOutput, ContainsIgnoreCase(@"C:\Windows\System32\en-US\KernelBase.dll.mui"));
     }
 
     [Test]
@@ -61,7 +63,7 @@ public class ProgramTest
         Assert.That(res.ExitCode, Is.EqualTo(0));
         Assert.That(res.StandardOutput, Contains.Substring(@"GrantedAccess"));
         Assert.That(res.StandardOutput, Contains.Substring(@"FILE_TYPE_UNKNOWN"));
-        Assert.That(res.StandardOutput, Contains.Substring(@"C:\\Windows\\System32\\en-US\\propsys.dll.mui"));
+        Assert.That(res.StandardOutput, ContainsIgnoreCase(@"C:\\Windows\\System32\\en-US\\propsys.dll.mui"));
         Assert.That(res.StandardOutput, Contains.Substring(@"\\Device\\HarddiskVolume"));
         Assert.That(res.StandardOutput, Contains.Substring(@"        ""HandleType"": ""Section"","));
     }
@@ -103,9 +105,9 @@ public class ProgramTest
         var res = RunHandle2(["--path", path]);
 
         Assert.That(res.ExitCode, Is.EqualTo(0));
-        Assert.That(res.StandardOutput, Contains.Substring(@"C:\Windows\system32\svchost.exe"));
-        Assert.That(res.StandardOutput, Contains.Substring(@"C:\Windows\System32\"));
-        Assert.That(res.StandardOutput, Contains.Substring(@"C:\Windows\System32\en-US\KernelBase.dll.mui"));
+        Assert.That(res.StandardOutput, ContainsIgnoreCase(@"C:\Windows\system32\svchost.exe"));
+        Assert.That(res.StandardOutput, ContainsIgnoreCase(@"C:\Windows\System32\"));
+        Assert.That(res.StandardOutput, ContainsIgnoreCase(@"C:\Windows\System32\en-US\KernelBase.dll.mui"));
         Assert.That(res.StandardOutput, Does.Not.Contain(@"\\Device\\HarddiskVolume"));
     }
 
@@ -123,14 +125,13 @@ public class ProgramTest
         Assert.That(res.StandardOutput, Does.Not.Contain(@"FILE_TYPE_UNKNOWN"));
     }
 
-    private static BufferedCommandResult RunHandle2(IEnumerable<string> args)
-    {
-        return Cli
-            .Wrap(Path.Combine(AppContext.BaseDirectory, "Handle2.exe"))
-            .WithValidation(CommandResultValidation.None)
-            .WithArguments(args)
-            .ExecuteBufferedAsync(Encoding.UTF8)
-            .GetAwaiter()
-            .GetResult();
-    }
+    private static BufferedCommandResult RunHandle2(IEnumerable<string> args) =>
+        Cli.Wrap(Path.Combine(AppContext.BaseDirectory, "Handle2.exe"))
+           .WithValidation(CommandResultValidation.None)
+           .WithArguments(args)
+           .ExecuteBufferedAsync(Encoding.UTF8)
+           .GetAwaiter()
+           .GetResult();
+
+    private static StringConstraint ContainsIgnoreCase(string expected) => Contains.Substring(expected).IgnoreCase;
 }

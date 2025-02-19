@@ -22,7 +22,7 @@ Function CreateZipArchive($file, $archiveFile) {
 Function GetVersion() {
     $gitCommand = Get-Command -Name git
 
-    $tag = & $gitCommand describe --exact-match --tags HEAD
+    try { $tag = & $gitCommand describe --exact-match --tags HEAD 2> $null } catch {}
     if(-Not $?) {
         Info "The commit is not tagged. Use 'v0.0-dev' as a tag instead"
         $tag = "v0.0-dev"
@@ -70,5 +70,5 @@ dotnet test `
   "$root/Handle2.sln"
 CheckReturnCodeOfPreviousCommand "Tests failed"
 
-ForceCopy "$buildDir/Release/Handle2/net462/Handle2.exe" "$publishDir/Handle2.exe"
+ForceCopy "$buildDir/Release/Handle2/net472/Handle2.exe" "$publishDir/Handle2.exe"
 CreateZipArchive "$publishDir/Handle2.exe" "$publishDir/Handle2.zip"

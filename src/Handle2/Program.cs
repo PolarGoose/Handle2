@@ -34,7 +34,7 @@ Parser.Default.ParseArguments<Options>(args)
                     }
 
                     var name = handle.FullNameIfItIsAFileOrAFolder ?? handle.Name;
-                    Console.WriteLine($"  {handle.HandleType,-25} {name}");
+                    Console.WriteLine($"  {handle.HandleType,-15} {name}");
                 }
 
                 Console.WriteLine("------------------------------------------------------------------------------");
