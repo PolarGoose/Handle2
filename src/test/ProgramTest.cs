@@ -51,8 +51,9 @@ public class ProgramTest
         Assert.That(res.StandardOutput, ContainsIgnoreCase(@"C:\Windows\system32\sihost.exe"));
         Assert.That(res.StandardOutput, ContainsIgnoreCase(@"Desktop"));
         Assert.That(res.StandardOutput, ContainsIgnoreCase(@"\Default"));
-        Assert.That(res.StandardOutput, ContainsIgnoreCase(@"C:\Windows\System32\"));
+        Assert.That(res.StandardOutput, ContainsIgnoreCase(@"  File            C:\Windows\System32\"));
         Assert.That(res.StandardOutput, ContainsIgnoreCase(@"C:\Windows\System32\en-US\KernelBase.dll.mui"));
+        Assert.That(res.StandardOutput, ContainsIgnoreCase(@"  Module          C:\WINDOWS\SYSTEM32\ntdll.dll"));
     }
 
     [Test]
@@ -66,6 +67,8 @@ public class ProgramTest
         Assert.That(res.StandardOutput, ContainsIgnoreCase(@"C:\\Windows\\System32\\en-US\\propsys.dll.mui"));
         Assert.That(res.StandardOutput, Contains.Substring(@"\\Device\\HarddiskVolume"));
         Assert.That(res.StandardOutput, Contains.Substring(@"        ""HandleType"": ""Section"","));
+        Assert.That(res.StandardOutput, Contains.Substring(@"    ""ModuleNames"": ["));
+        Assert.That(res.StandardOutput, ContainsIgnoreCase(@"      ""C:\\WINDOWS\\SYSTEM32\\ntdll.dll"","));
     }
 
     [Test]

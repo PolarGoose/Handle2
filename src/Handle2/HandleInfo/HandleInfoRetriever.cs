@@ -40,7 +40,8 @@ public record struct ProcessInfo(
     string? ProcessExecutablePath,
     string? UserName,
     string? DomainName,
-    IEnumerable<HandleInfo> Handles);
+    IEnumerable<HandleInfo> Handles,
+    IEnumerable<string> ModuleNames);
 
 public static class HandleInfoRetriever
 {
@@ -63,7 +64,7 @@ public static class HandleInfoRetriever
         }
     }
 
-    public static IEnumerable<ProcessInfo> GetAllProcInfos()
+    private static IEnumerable<ProcessInfo> GetProcInfos(Func<string?, bool> handleAndModuleNameFilter)
     {
         var currentProcess = WinApi.GetCurrentProcess();
         var result = new List<ProcessInfo>();
@@ -123,15 +124,21 @@ public static class HandleInfoRetriever
                             watchdog.Disarm();
                         }
 
-                        currentHandles.Add(handle);
+                        if(handleAndModuleNameFilter(handle.FullNameIfItIsAFileOrAFolder))
+                        {
+                            currentHandles.Add(handle);
+                        }
                     }
 
-                    if (currentHandles.Any())
+                    var moduleNames = ProcessUtils.GetProcessModules(currentOpenedProcess).Where(name => handleAndModuleNameFilter(name)).ToArray();
+
+                    if (currentHandles.Any() || moduleNames.Any())
                     {
                         var procInfo = new ProcessInfo
                         {
                             Pid = pid.ToUInt64(),
-                            Handles = currentHandles
+                            Handles = currentHandles,
+                            ModuleNames = moduleNames
                         };
                         (procInfo.DomainName, procInfo.UserName) = ProcessUtils.GetOwnerDomainAndUserNames(currentOpenedProcess);
                         procInfo.ProcessExecutablePath = ProcessUtils.GetProcessExeFullName(currentOpenedProcess);
@@ -149,27 +156,14 @@ public static class HandleInfoRetriever
         return result;
     }
 
+    public static IEnumerable<ProcessInfo> GetAllProcInfos()
+    {
+        return GetProcInfos(_ => true);
+    }
+
     public static IEnumerable<ProcessInfo> GetProcInfosLockingPath(string path)
     {
         path = FileUtils.ToCanonicalPath(path);
-        var allInfos = GetAllProcInfos();
-        var result = new List<ProcessInfo>();
-
-        foreach(var info in allInfos)
-        {
-            var handles = info.Handles.Where(h => h.FullNameIfItIsAFileOrAFolder?.StartsWith(path, StringComparison.InvariantCultureIgnoreCase) == true);
-            if (handles.Any())
-            {
-                result.Add(new ProcessInfo
-                {
-                    Pid = info.Pid,
-                    ProcessExecutablePath = info.ProcessExecutablePath,
-                    UserName = info.UserName,
-                    DomainName = info.DomainName,
-                    Handles = handles
-                });
-            }
-        }
-        return result;
+        return GetProcInfos(fileName => fileName?.StartsWith(path, StringComparison.InvariantCultureIgnoreCase) == true);
     }
 }

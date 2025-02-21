@@ -170,6 +170,8 @@ public class WinApi
         SecurityAnonymous = 0x00100000
     }
 
+    public const int ERROR_INSUFFICIENT_BUFFER = 122;
+
     [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
     public static extern bool QueryFullProcessImageName(
         SafeProcessHandle hProcess,
@@ -177,5 +179,9 @@ public class WinApi
         StringBuilder? lpExeName,
         ref int lpdwSize);
 
-    public const int ERROR_INSUFFICIENT_BUFFER = 122;
+    [DllImport("psapi.dll", SetLastError = true)]
+    public static extern bool EnumProcessModules(SafeProcessHandle hProcess, IntPtr[] lphModule, int cb, out int lpcbNeeded);
+
+    [DllImport("psapi.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    public static extern uint GetModuleFileNameEx(SafeProcessHandle hProcess, IntPtr hModule, [Out] StringBuilder lpFilename, int nSize);
 }

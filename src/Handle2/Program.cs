@@ -37,6 +37,11 @@ Parser.Default.ParseArguments<Options>(args)
                     Console.WriteLine($"  {handle.HandleType,-15} {name}");
                 }
 
+                foreach (var moduleName in procWithHandles.ModuleNames)
+                {
+                    Console.WriteLine($"  {"Module",-15} {moduleName}");
+                }
+
                 Console.WriteLine("------------------------------------------------------------------------------");
             }
         }
@@ -56,6 +61,11 @@ Parser.Default.ParseArguments<Options>(args)
                 foreach (var handle in procWithHandles.Handles)
                 {
                     Console.WriteLine($"  {handle.FullNameIfItIsAFileOrAFolder}");
+                }
+
+                foreach (var moduleName in procWithHandles.ModuleNames)
+                {
+                    Console.WriteLine($"  {moduleName}");
                 }
 
                 Console.WriteLine("------------------------------------------------------------------------------");
@@ -90,6 +100,6 @@ public sealed class Options
     [Option("path", Required = true, SetName = "path", HelpText = "Displays the processes locking the path")]
     public string? Path { get; set; }
 
-    [Option("dump-all-handles", Required = true, Default = false, SetName = "dump-all-handles", HelpText = "Displays information about all system handles.")]
+    [Option("dump-all-handles", Required = true, Default = false, SetName = "dump-all-handles", HelpText = "Displays information about all system handles and modules")]
     public bool DumpAllHandles { get; set; }
 }

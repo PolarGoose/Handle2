@@ -2,6 +2,8 @@
 
 An open-source alternative to the [Sysinternals Handle](https://learn.microsoft.com/en-us/sysinternals/downloads/handle)<tr>
 * Identifies processes that are locking specific files or folders
+* Include process modules in the search
+  * Note: `Sysinternals Handle` doesn't include process modules in the search. Thus, it can fail to find the locking process.
 * Shows information about all handles in the system
 * Supports JSON output
 * Full Unicode support
@@ -9,7 +11,7 @@ An open-source alternative to the [Sysinternals Handle](https://learn.microsoft.
 
 ## System requirements
 
-* Windows 7 x64 and higher.
+* Windows 7 and higher.
 
 ## Usage
 
@@ -30,11 +32,12 @@ Examples:
 
 Command-line options:
 
-  --json                (Default: false) Json output
+  --json                (Default: false) JSON output. For details on the meanings of the fields provided, please consult
+                        the HandleInfo and SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX structures in the source code.
 
-  --path                Required. (Default: false) path
+  --path                Required. Displays the processes locking the path
 
-  --dump-all-handles    Required. (Default: false) Displays information about all system handles.
+  --dump-all-handles    Required. (Default: false) Displays information about all system handles and modules
 
   --help                Display this help screen.
 
@@ -42,6 +45,4 @@ Command-line options:
 ```
 
 ## How to build
-
-* To work with the codebase, `Visual Studio 2022` can be used.
-* To build the project, run `build.ps` script (`git.exe` should be in the PATH)
+To build the project, run `build.ps` script (`git.exe` should be in the PATH)
