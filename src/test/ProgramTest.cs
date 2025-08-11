@@ -128,6 +128,38 @@ public class ProgramTest
         Assert.That(res.StandardOutput, Does.Not.Contain(@"FILE_TYPE_UNKNOWN"));
     }
 
+    [Test]
+    public void When_path_is_a_file_only_shows_processes_locked_this_file()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "Handle2Tests_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            var file = Path.Combine(tempDir, "file.txt");
+            var fileLocked = Path.Combine(tempDir, "fileLocked.txt");
+
+            // Dummy writes to create the files
+            File.WriteAllText(file, "not locked");
+            File.WriteAllText(fileLocked, "locked");
+
+            // This will make sure the file is locked
+            using FileStream fileLockedStream = new FileStream(fileLocked, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+           
+            var res = RunHandle2(["--path", file]);
+            Assert.That(res.ExitCode, Is.EqualTo(0));
+            Assert.That(res.StandardOutput, Is.Empty);
+
+            res = RunHandle2(["--path", fileLocked]);
+            Assert.That(res.ExitCode, Is.EqualTo(0));
+            Assert.That(res.StandardOutput, Contains.Substring("fileLocked.txt"));
+        }
+        finally
+        {
+            Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
     private static BufferedCommandResult RunHandle2(IEnumerable<string> args) =>
         Cli.Wrap(Path.Combine(AppContext.BaseDirectory, "Handle2.exe"))
            .WithValidation(CommandResultValidation.None)

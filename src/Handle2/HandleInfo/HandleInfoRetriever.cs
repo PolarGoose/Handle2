@@ -66,7 +66,7 @@ public static class HandleInfoRetriever
 
     private static IEnumerable<ProcessInfo> GetProcInfos(Func<string?, bool> handleAndModuleNameFilter)
     {
-        var currentProcess = WinApi.GetCurrentProcess();
+        using var currentProcess = WinApi.GetCurrentProcess();
         var result = new List<ProcessInfo>();
 
         var processes = QuerySystemHandleInformation().Select(processAndHandles => (processAndHandles.Key, processAndHandles.ToArray())).ToArray();
@@ -78,7 +78,7 @@ public static class HandleInfoRetriever
 
         while (currentProcessIndex < processes.Length)
         {
-            new WorkerThreadWithDeadLockDetection(TimeSpan.FromMilliseconds(50), watchdog =>
+            new WorkerThreadWithDeadLockDetection(TimeSpan.FromMilliseconds(20), watchdog =>
             {
                 while (currentProcessIndex < processes.Length)
                 {
@@ -164,6 +164,12 @@ public static class HandleInfoRetriever
     public static IEnumerable<ProcessInfo> GetProcInfosLockingPath(string path)
     {
         path = FileUtils.ToCanonicalPath(path);
-        return GetProcInfos(fileName => fileName?.StartsWith(path, StringComparison.InvariantCultureIgnoreCase) == true);
+        if (path.EndsWith('\\'))
+        {
+            // if the path is a directory, then we need to get all files located in that directory
+            return GetProcInfos(fileName => fileName?.StartsWith(path, StringComparison.InvariantCultureIgnoreCase) == true);
+        }
+
+        return GetProcInfos(fileName => string.Equals(fileName, path, StringComparison.InvariantCultureIgnoreCase) == true);
     }
 }
