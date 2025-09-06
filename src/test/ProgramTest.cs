@@ -129,7 +129,7 @@ public class ProgramTest
     }
 
     [Test]
-    public void When_path_is_a_file_only_shows_processes_locked_this_file()
+    public void When_path_is_a_file_only_shows_processes_locking_this_file()
     {
         var tempDir = Path.Combine(Path.GetTempPath(), "Handle2Tests_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(tempDir);
@@ -153,6 +153,37 @@ public class ProgramTest
             res = RunHandle2(["--path", fileLocked]);
             Assert.That(res.ExitCode, Is.EqualTo(0));
             Assert.That(res.StandardOutput, Contains.Substring("fileLocked.txt"));
+        }
+        finally
+        {
+            Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Test]
+    public void Works_with_files_containing_unicode_symbols()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "Handle2Tests_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            var file = Path.Combine(tempDir, "полярный гусь _ 北极鹅 _ ホッキョクガチョウ");
+
+            // Dummy write to create the files
+            File.WriteAllText(file, "locked");
+
+            // This will make sure the file is locked
+            using FileStream fileLockedStream = new FileStream(file, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
+            var res = RunHandle2(["--path", file]);
+            Assert.That(res.ExitCode, Is.EqualTo(0));
+            Assert.That(res.StandardOutput, Contains.Substring(file));
+
+            // JSON escapes unicode symbols
+            res = RunHandle2(["--json", "--path", file]);
+            Assert.That(res.ExitCode, Is.EqualTo(0));
+            Assert.That(res.StandardOutput, Contains.Substring(@"u043F\u043E\u043B\u044F\u0440\u043D\u044B\u0439 \u0433\u0443\u0441\u044C _ \u5317\u6781\u9E45 _ \u30DB\u30C3\u30AD\u30E7\u30AF\u30AC\u30C1\u30E7\u30A6"));
         }
         finally
         {

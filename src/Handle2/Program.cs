@@ -1,8 +1,16 @@
 using CommandLine;
 using Handle2.HandleInfo;
 using Handle2.HandleInfo.Utils;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+
+Console.OutputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+var jsonSerializationOptions = new JsonSerializerOptions
+{
+    WriteIndented = true,
+    Converters = { new JsonStringEnumConverter() }
+};
 
 if (args.Length == 0)
     args = ["--help"];
@@ -14,10 +22,7 @@ Parser.Default.ParseArguments<Options>(args)
     {
         if (o.DumpAllHandles && o.Json)
         {
-            Console.Write(
-                JsonSerializer.Serialize(
-                    HandleInfoRetriever.GetAllProcInfos(),
-                    new JsonSerializerOptions { WriteIndented = true, Converters = { new JsonStringEnumConverter() } }));
+            Console.Write(JsonSerializer.Serialize(HandleInfoRetriever.GetAllProcInfos(), jsonSerializationOptions));
         }
 
         if (o.DumpAllHandles && !o.Json)
@@ -75,11 +80,7 @@ Parser.Default.ParseArguments<Options>(args)
         if (o.Path != null && o.Json)
         {
             var processesLockingPath = HandleInfoRetriever.GetProcInfosLockingPath(o.Path);
-
-            Console.Write(
-                JsonSerializer.Serialize(
-                    processesLockingPath,
-                    new JsonSerializerOptions { WriteIndented = true, Converters = { new JsonStringEnumConverter() } }));
+            Console.Write(JsonSerializer.Serialize(processesLockingPath, jsonSerializationOptions));
         }
     });
 

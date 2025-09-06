@@ -86,8 +86,7 @@ public class WinApi
         return new SafeProcessHandle(handle, false);
     }
 
-    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode, ExactSpelling = true)]
-    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
     private static extern int GetFinalPathNameByHandleW(SafeFileHandle hFile, [Out] StringBuilder filePathBuffer, int filePathBufferSize, int flags);
 
     public static string? GetFinalPathNameByHandle(SafeFileHandle hFile)
