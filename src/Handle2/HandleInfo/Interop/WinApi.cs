@@ -86,29 +86,6 @@ public class WinApi
         return new SafeProcessHandle(handle, false);
     }
 
-    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-    private static extern int GetFinalPathNameByHandleW(SafeFileHandle hFile, [Out] StringBuilder filePathBuffer, int filePathBufferSize, int flags);
-
-    public static string? GetFinalPathNameByHandle(SafeFileHandle hFile)
-    {
-        var buf = new StringBuilder();
-        var result = GetFinalPathNameByHandleW(hFile, buf, buf.Capacity, 0);
-        if (result == 0)
-        {
-            return null;
-        }
-
-        buf.EnsureCapacity(result);
-        result = GetFinalPathNameByHandleW(hFile, buf, buf.Capacity, 0);
-        if (result == 0)
-        {
-            return null;
-        }
-
-        var str = buf.ToString();
-        return str.StartsWith(@"\\?\") ? str[4..] : str;
-    }
-
     [Flags]
     public enum TokenAccessRights : ulong
     {
@@ -130,44 +107,6 @@ public class WinApi
 
     [DllImport("Kernel32.dll", SetLastError = true)]
     public static extern FileType GetFileType(SafeFileHandle hFile);
-
-    [Flags]
-    public enum FileDesiredAccess : uint
-    {
-        None = 0,
-        Synchronize = 0x00100000,
-        Delete = 0x00010000,
-        GenericRead = 0x80000000,
-        GenericWrite = 0x40000000,
-        FileReadAttributes = 0x0080,
-        FileWriteAttributes = 0x00100
-    }
-
-    [Flags]
-    public enum FileFlagsAndAttributes : uint
-    {
-        None = 0,
-        FileAttributeArchive = 0x20,
-        FileAttributeEncrypted = 0x4000,
-        FileAttributeHidden = 0x2,
-        FileAttributeNormal = 0x80,
-        FileAttributeOffline = 0x1000,
-        FileAttributeReadOnly = 0x1,
-        FileAttributeSystem = 0x4,
-        FileAttributeTemporary = 0x100,
-        FileFlagBackupSemantics = 0x02000000,
-        FileFlagDeleteOnClose = 0x04000000,
-        FileFlagNoBuffering = 0x20000000,
-        FileFlagOpenNoRecall = 0x00100000,
-        FileFlagOpenReparsePoint = 0x00200000,
-        FileFlagOverlapped = 0x40000000,
-        FileFlagPosixSemantics = 0x01000000,
-        FileFlagRandomAccess = 0x10000000,
-        FileFlagSessionAware = 0x00800000,
-        FileFlagSequentialScan = 0x08000000,
-        FileFlagWriteThrough = 0x80000000,
-        SecurityAnonymous = 0x00100000
-    }
 
     public const int ERROR_INSUFFICIENT_BUFFER = 122;
 

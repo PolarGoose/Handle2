@@ -44,7 +44,7 @@ public static class NtDll
     {
         public IntPtr NumberOfHandles;
         public IntPtr Reserved;
-        public SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX Handles; // Single element
+        public SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX Handles;
     }
 
     [StructLayout(LayoutKind.Sequential)]

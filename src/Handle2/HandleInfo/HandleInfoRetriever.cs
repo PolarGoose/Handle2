@@ -50,23 +50,20 @@ public static class HandleInfoRetriever
         return NtDll.QuerySystemHandleInformation().GroupBy(handle => handle.UniqueProcessId);
     }
 
-    private static void AddHandleTypeAndNameInfo(SafeFileHandle handle, ref HandleInfo handleInfo)
+    private static void AddHandleTypeAndNameInfo(SafeFileHandle handle, DevicePathToDrivePathConverter devicePathToDrivePathConverter, ref HandleInfo handleInfo)
     {
         handleInfo.FileType = WinApi.GetFileType(handle);
         handleInfo.Name = NtDll.GetHandleName(handle);
-        if (handleInfo.FileType == WinApi.FileType.FILE_TYPE_DISK)
+        if (handleInfo.HandleType == "File" && handleInfo.Name is not null)
         {
-            handleInfo.FullNameIfItIsAFileOrAFolder = WinApi.GetFinalPathNameByHandle(handle);
-            if (handleInfo.FullNameIfItIsAFileOrAFolder is not null)
-            {
-                handleInfo.FullNameIfItIsAFileOrAFolder = FileUtils.AddTrailingSeparatorIfItIsAFolder(handleInfo.FullNameIfItIsAFileOrAFolder);
-            }
+            handleInfo.FullNameIfItIsAFileOrAFolder = ToWindowsPath(devicePathToDrivePathConverter, handleInfo.Name);
         }
     }
 
-    private static IEnumerable<ProcessInfo> GetProcInfos(Func<string?, bool> handleAndModuleNameFilter)
+    private static IEnumerable<ProcessInfo> GetProcInfos(Func<HandleInfo, bool> handleFilter, Func<string, bool> moduleNameFilter, bool onlyFileHandles)
     {
         using var currentProcess = WinApi.GetCurrentProcess();
+        var devicePathToDrivePathConverter = new DevicePathToDrivePathConverter();
         var result = new List<ProcessInfo>();
 
         var processes = QuerySystemHandleInformation().Select(processAndHandles => (processAndHandles.Key, processAndHandles.ToArray())).ToArray();
@@ -75,10 +72,11 @@ public static class HandleInfoRetriever
         SafeProcessHandle? currentOpenedProcess = null;
         var currentHandles = new List<HandleInfo>();
         SafeFileHandle? currentDupHandle = null;
+        ushort? fileHandleObjectTypeIndex = null;
 
         while (currentProcessIndex < processes.Length)
         {
-            new WorkerThreadWithDeadLockDetection(TimeSpan.FromMilliseconds(20), watchdog =>
+            WorkerThreadWithDeadLockDetection.Run(TimeSpan.FromMilliseconds(50), watchdog =>
             {
                 while (currentProcessIndex < processes.Length)
                 {
@@ -103,6 +101,11 @@ public static class HandleInfoRetriever
                         var h = handles[currentHandleIndex];
                         currentHandleIndex++;
 
+                        if (onlyFileHandles && fileHandleObjectTypeIndex is not null && h.ObjectTypeIndex != fileHandleObjectTypeIndex)
+                        {
+                            continue;
+                        }
+
                         currentDupHandle = WinApi.DuplicateHandle(currentProcess, currentOpenedProcess, h);
                         if (currentDupHandle.IsInvalid)
                         {
@@ -114,23 +117,45 @@ public static class HandleInfoRetriever
                             GrantedAccess = h.GrantedAccess,
                             Attributes = h.HandleAttributes,
                             AddressInTheKernelMemory = (ulong)h.Object.ToInt64(),
-                            HandleType = NtDll.GetHandleType(currentDupHandle)
                         };
 
-                        if (handle.HandleType is not null)
+                        watchdog.Arm();
+                        try
                         {
-                            watchdog.Arm();
-                            AddHandleTypeAndNameInfo(currentDupHandle, ref handle);
+                            handle.HandleType = NtDll.GetHandleType(currentDupHandle);
+                            if (onlyFileHandles && handle.HandleType != "File")
+                            {
+                                continue;
+                            }
+
+                            if (handle.HandleType == "File")
+                            {
+                                fileHandleObjectTypeIndex = h.ObjectTypeIndex;
+                            }
+
+                            if (handle.HandleType is not null)
+                            {
+                                AddHandleTypeAndNameInfo(currentDupHandle, devicePathToDrivePathConverter, ref handle);
+                            }
+                        }
+                        catch (Exception)
+                        {
+                        }
+                        finally
+                        {
                             watchdog.Disarm();
                         }
 
-                        if(handleAndModuleNameFilter(handle.FullNameIfItIsAFileOrAFolder))
+                        if(handleFilter(handle))
                         {
                             currentHandles.Add(handle);
                         }
                     }
 
-                    var moduleNames = ProcessUtils.GetProcessModules(currentOpenedProcess).Where(name => handleAndModuleNameFilter(name)).ToArray();
+                    var moduleNames = ProcessUtils.GetProcessModules(currentOpenedProcess)
+                                                  .Select(name => ToWindowsPath(devicePathToDrivePathConverter, name) ?? name)
+                                                  .Where(moduleNameFilter)
+                                                  .ToArray();
 
                     if (currentHandles.Any() || moduleNames.Any())
                     {
@@ -150,7 +175,7 @@ public static class HandleInfoRetriever
                     currentOpenedProcess = null;
                     currentProcessIndex++;
                 }
-            }).Run();
+            });
         }
 
         return result;
@@ -158,18 +183,38 @@ public static class HandleInfoRetriever
 
     public static IEnumerable<ProcessInfo> GetAllProcInfos()
     {
-        return GetProcInfos(_ => true);
+        return GetProcInfos(_ => true, _ => true, false);
     }
 
     public static IEnumerable<ProcessInfo> GetProcInfosLockingPath(string path)
     {
-        path = FileUtils.ToCanonicalPath(path);
-        if (path.EndsWith('\\'))
+        var canonicalPath = new CanonicalPath(path);
+        if (canonicalPath.IsDirectory)
         {
-            // if the path is a directory, then we need to get all files located in that directory
-            return GetProcInfos(fileName => fileName?.StartsWith(path, StringComparison.InvariantCultureIgnoreCase) == true);
+            return GetProcInfos(
+                handle => handle.FullNameIfItIsAFileOrAFolder?.StartsWith(canonicalPath.Path, StringComparison.InvariantCultureIgnoreCase) == true,
+                moduleName => moduleName.StartsWith(canonicalPath.Path, StringComparison.InvariantCultureIgnoreCase),
+                true);
         }
 
-        return GetProcInfos(fileName => string.Equals(fileName, path, StringComparison.InvariantCultureIgnoreCase) == true);
+        return GetProcInfos(
+            handle => string.Equals(handle.FullNameIfItIsAFileOrAFolder, canonicalPath.Path, StringComparison.InvariantCultureIgnoreCase),
+            moduleName => string.Equals(moduleName, canonicalPath.Path, StringComparison.InvariantCultureIgnoreCase),
+            true);
+    }
+
+    private static string? ToWindowsPath(DevicePathToDrivePathConverter devicePathToDrivePathConverter, string devicePath)
+    {
+        if (devicePath.StartsWith("\\Device\\Mup\\"))
+        {
+            return FileUtils.AddTrailingSeparatorIfItIsAFolder("\\" + devicePath.Substring(11));
+        }
+
+        if (devicePath.StartsWith("\\Device\\") && devicePathToDrivePathConverter.GetDriveLetterBasedFullName(devicePath) is { } path)
+        {
+            return FileUtils.AddTrailingSeparatorIfItIsAFolder(path);
+        }
+
+        return null;
     }
 }

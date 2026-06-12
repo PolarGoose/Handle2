@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/Files/">
+    <File Path=".editorconfig" />
+    <File Path=".gitattributes" />
+    <File Path=".github/workflows/main.yaml" />
+    <File Path=".gitignore" />
+    <File Path="build.ps1" />
+    <File Path="Directory.Build.props" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="src/Handle2/Handle2.csproj" />
+  <Project Path="src/Test/Test.csproj" />
+</Solution>

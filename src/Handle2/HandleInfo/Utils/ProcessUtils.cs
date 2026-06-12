@@ -83,6 +83,11 @@ public static class ProcessUtils
             var name = GetModuleName(openedProc, moduleHandle);
             if(name != null)
             {
+                if (name.StartsWith(@"\\?"))
+                {
+                    name = name.Substring(4);
+                }
+
                 yield return name;
             }
         }

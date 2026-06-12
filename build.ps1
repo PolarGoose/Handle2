@@ -57,7 +57,7 @@ dotnet build `
   -verbosity:minimal `
   /property:DebugType=None `
   /property:Version=$version `
-  "$root/Handle2.sln"
+  "$root/Handle2.slnx"
 CheckReturnCodeOfPreviousCommand "Cmake generation phase failed"
 
 Info "Run tests"
@@ -67,7 +67,7 @@ dotnet test `
   --configuration Release `
   -verbosity:minimal `
   --logger:"console;verbosity=normal" `
-  "$root/Handle2.sln"
+  "$root/Handle2.slnx"
 CheckReturnCodeOfPreviousCommand "Tests failed"
 
 ForceCopy "$buildDir/Release/Handle2/net472/Handle2.exe" "$publishDir/Handle2.exe"

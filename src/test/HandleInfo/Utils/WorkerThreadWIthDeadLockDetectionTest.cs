@@ -10,7 +10,7 @@ public class WorkerThreadWIthDeadLockDetectionTest
     [Test]
     public void Action_completes_without_deadlock()
     {
-        var worker = new WorkerThreadWithDeadLockDetection(TimeSpan.FromSeconds(300), watchdog =>
+        var result = WorkerThreadWithDeadLockDetection.Run(TimeSpan.FromSeconds(300), watchdog =>
         {
             for(var ms = 0; ms <= 600; ms += 50)
             {
@@ -20,40 +20,40 @@ public class WorkerThreadWIthDeadLockDetectionTest
             }
         });
 
-        Assert.That(worker.Run(), Is.True);
+        Assert.That(result, Is.True);
     }
 
     [Test]
     public void Action_deadlocks()
     {
-        var worker = new WorkerThreadWithDeadLockDetection(TimeSpan.FromMilliseconds(100), watchdog =>
+        var result = WorkerThreadWithDeadLockDetection.Run(TimeSpan.FromMilliseconds(100), watchdog =>
         {
             watchdog.Arm();
             Thread.Sleep(1000);
             watchdog.Disarm();
         });
 
-        Assert.That(worker.Run(), Is.False);
+        Assert.That(result, Is.False);
     }
 
     [Test]
     public void Action_throws_exception()
     {
-        var worker = new WorkerThreadWithDeadLockDetection(TimeSpan.FromMilliseconds(100), watchdog =>
+        var result = WorkerThreadWithDeadLockDetection.Run(TimeSpan.FromMilliseconds(100), watchdog =>
         {
             throw new InvalidOperationException("Test exception");
         });
 
-        Assert.That(worker.Run(), Is.True);
+        Assert.That(result, Is.True);
     }
 
     [Test]
     public void Action_does_not_arm_watchdog()
     {
-        var worker = new WorkerThreadWithDeadLockDetection(TimeSpan.FromMilliseconds(100), watchdog =>
+        var result = WorkerThreadWithDeadLockDetection.Run(TimeSpan.FromMilliseconds(100), watchdog =>
         {
             Thread.Sleep(10);
         });
-        Assert.That(worker.Run(), Is.True);
+        Assert.That(result, Is.True);
     }
 }
