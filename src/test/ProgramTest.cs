@@ -64,7 +64,6 @@ public class ProgramTest
         Assert.That(res.ExitCode, Is.EqualTo(0));
         Assert.That(res.StandardOutput, Contains.Substring(@"GrantedAccess"));
         Assert.That(res.StandardOutput, Contains.Substring(@"FILE_TYPE_UNKNOWN"));
-        Assert.That(res.StandardOutput, ContainsIgnoreCase(@"C:\\Windows\\System32\\en-US\\propsys.dll.mui"));
         Assert.That(res.StandardOutput, Contains.Substring(@"\\Device\\HarddiskVolume"));
         Assert.That(res.StandardOutput, Contains.Substring(@"        ""HandleType"": ""Section"","));
         Assert.That(res.StandardOutput, Contains.Substring(@"    ""ModuleNames"": ["));

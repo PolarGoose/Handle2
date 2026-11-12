@@ -1,0 +1,19 @@
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: ./build.ps1
+      - uses: softprops/action-gh-release@v3
+        if: github.ref_type == 'tag'
+        with:
+          draft: true
+          files: build/Handle2.zip
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Build artifacts
+          path: build/Handle2.zip

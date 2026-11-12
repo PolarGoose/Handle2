@@ -2,7 +2,7 @@
   <Folder Name="/Files/">
     <File Path=".editorconfig" />
     <File Path=".gitattributes" />
-    <File Path=".github/workflows/main.yaml" />
+    <File Path=".github/workflows/CI.yaml" />
     <File Path=".gitignore" />
     <File Path="build.ps1" />
     <File Path="Directory.Build.props" />
