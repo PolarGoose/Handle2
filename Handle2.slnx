@@ -1,13 +1,20 @@
 <Solution>
+  <Configurations>
+    <Platform Name="x64" />
+  </Configurations>
   <Folder Name="/Files/">
     <File Path=".editorconfig" />
     <File Path=".gitattributes" />
-    <File Path=".github/workflows/main.yaml" />
+    <File Path=".github/workflows/CI.yaml" />
     <File Path=".gitignore" />
     <File Path="build.ps1" />
     <File Path="Directory.Build.props" />
     <File Path="README.md" />
   </Folder>
-  <Project Path="src/Handle2/Handle2.csproj" />
-  <Project Path="src/Test/Test.csproj" />
+  <Project Path="src/Handle2/Handle2.csproj">
+    <Platform Project="x64" />
+  </Project>
+  <Project Path="src/Test/Test.csproj">
+    <Platform Project="x64" />
+  </Project>
 </Solution>

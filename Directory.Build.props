@@ -2,11 +2,15 @@
   <PropertyGroup>
     <ProjectRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))</ProjectRoot>
     <BuildFolder>$(ProjectRoot)build\</BuildFolder>
-    <OutputPath>$(BuildFolder)$(Configuration)\$(MSBuildProjectName)</OutputPath>
-    <BaseIntermediateOutputPath>$(BuildFolder)obj\$(MSBuildProjectName)\$(Configuration)\</BaseIntermediateOutputPath>
-    <TargetFramework>net472</TargetFramework>
+    <Platforms>x64</Platforms>
+    <Platform Condition="'$(Platform)' == ''">x64</Platform>
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+    <OutputPath>$(BuildFolder)$(Platform)\$(Configuration)\$(MSBuildProjectName)\</OutputPath>
+    <BaseIntermediateOutputPath>$(BuildFolder)obj\$(MSBuildProjectName)\$(Platform)\$(Configuration)\</BaseIntermediateOutputPath>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <LangVersion>latest</LangVersion>
-    <Platforms>AnyCpu</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <WarningLevel>5</WarningLevel>
