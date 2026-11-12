@@ -29,22 +29,28 @@ $root = Resolve-Path $PSScriptRoot
 $buildDir = "$root/build"
 $version = GetVersion
 
-Info "Build the project. Version=$version"
-dotnet build --nologo `
-             --configuration Release `
-             -verbosity:minimal `
-             /property:DebugType=None `
-             /property:Version=$version `
-             "$root/Handle2.slnx"
-CheckReturnCodeOfPreviousCommand "Build failed"
-
 Info "Run tests"
 dotnet test --nologo `
-            --no-build `
             --configuration Release `
             -verbosity:minimal `
+            /property:Platform=x64 `
             --logger:"console;verbosity=normal" `
-            "$root/Handle2.slnx"
+            "$root/src/test/Test.csproj"
 CheckReturnCodeOfPreviousCommand "Tests failed"
 
-Compress-Archive -Force -Path "$buildDir/Release/Handle2/net472/Handle2.exe" -DestinationPath "$buildDir/Handle2.zip"
+Info "Publish Native AOT executable. Version '$version'"
+dotnet publish --nologo `
+               --configuration Release `
+               --runtime win-x64 `
+               -verbosity:minimal `
+               /property:Platform=x64 `
+               /property:PublishAot=true `
+               /property:PublishTrimmed=true `
+               /property:TrimMode=full `
+               /property:DebugType=None `
+               /property:Version=$version `
+               "$root/src/Handle2/Handle2.csproj"
+CheckReturnCodeOfPreviousCommand "Publish failed"
+
+Info "Create zip archive"
+Compress-Archive -Force -Path "$buildDir/x64/Release/Handle2/net10.0-windows/win-x64/native/Handle2.exe" -DestinationPath "$buildDir/Handle2.zip"

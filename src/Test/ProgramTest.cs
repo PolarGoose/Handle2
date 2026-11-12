@@ -1,7 +1,9 @@
 using CliWrap;
 using CliWrap.Buffered;
+using Handle2;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
+using System.Reflection;
 using System.Text;
 
 namespace Test;
@@ -16,30 +18,61 @@ public class ProgramTest
         var res = RunHandle2([]);
 
         Assert.That(res.ExitCode, Is.EqualTo(0));
-        Assert.That(res.StandardError, Contains.Substring("console utility that displays"));
+        Assert.That(res.StandardOutput, Contains.Substring("console utility that displays"));
+        Assert.That(res.StandardError, Is.Empty);
+    }
+
+    [TestCase("--help")]
+    [TestCase("-h")]
+    [TestCase("-?")]
+    public void Prints_help_when_help_parameter_is_passed(string option)
+    {
+        var res = RunHandle2([option]);
+
+        Assert.That(res.ExitCode, Is.EqualTo(0));
+        Assert.That(res.StandardOutput, Contains.Substring("console utility that displays"));
+        Assert.That(res.StandardOutput, Contains.Substring("https://github.com/PolarGoose/Handle2"));
+        Assert.That(res.StandardOutput, Contains.Substring("--json"));
+        Assert.That(res.StandardOutput, Contains.Substring("--path"));
+        Assert.That(res.StandardOutput, Contains.Substring("--dump-all-handles"));
+        Assert.That(res.StandardError, Is.Empty);
     }
 
     [Test]
-    public void Prints_help_when_help_parameter_is_passed()
+    public void Prints_version_without_help_text()
     {
-        var res = RunHandle2(["--help"]);
+        var res = RunHandle2(["--version"]);
+        var version = typeof(CommandLineOptions).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion;
 
         Assert.That(res.ExitCode, Is.EqualTo(0));
-        Assert.That(res.StandardError, Contains.Substring("console utility that displays"));
+        Assert.That(res.StandardOutput.Trim(), Is.EqualTo(version));
+        Assert.That(res.StandardError, Is.Empty);
     }
 
+    [TestCase(["--unknown"])]
+    [TestCase(["--json"])]
     [TestCase(["non existing parameter"])]
-    [TestCase(["--path", "123", "--dump-all-handles"])]
+    [TestCase(["--path", @"C:\Windows", "--dump-all-handles"])]
     [TestCase(["--path"])]
+    [TestCase(["--path", "--json"])]
+    [TestCase(["--path="])]
+    [TestCase(["--path", " "])]
+    [TestCase(["--path", @"C:\Windows", "--path", @"C:\Windows\System32"])]
+    [TestCase(["--json=invalid", "--path", @"C:\Windows"])]
+    [TestCase(["--json=true", "--json=false", "--path", @"C:\Windows"])]
+    [TestCase(["--dump-all-handles=invalid"])]
+    [TestCase(["--dump-all-handles=true", "--dump-all-handles=false"])]
+    [TestCase(["--dump-all-handles=false"])]
+    [TestCase(["--dump-all-handles", "false"])]
     [TestCase(["--path --json"])]
     [TestCase(["--dump-all-handles param"])]
     public void Prints_help_and_an_error_message_when_wrong_parameters_are_passed(object[] args)
     {
         var res = RunHandle2(args.Select(a => a.ToString()!));
 
-        Assert.That(res.ExitCode, Is.EqualTo(0));
-        Assert.That(res.StandardError, Contains.Substring("console utility that displays"));
-        Assert.That(res.StandardError, Contains.Substring("ERROR(S):"));
+        Assert.That(res.ExitCode, Is.EqualTo(1));
+        Assert.That(res.StandardOutput, Contains.Substring("console utility that displays"));
+        Assert.That(res.StandardError, Is.Not.Empty);
     }
 
     [Test]
@@ -71,12 +104,38 @@ public class ProgramTest
     }
 
     [Test]
-    public void Path_non_locked_folder()
+    public void Path_non_locked_file()
     {
         var res = RunHandle2(["--path", @"C:\Windows\system.ini"]);
 
         Assert.That(res.ExitCode, Is.EqualTo(0));
         Assert.That(res.StandardOutput, Is.Empty);
+        Assert.That(res.StandardError, Is.Empty);
+    }
+
+    [TestCase(new[] { @"--path=C:\Windows\system.ini" }, false)]
+    [TestCase(new[] { "--json=true", "--path", @"C:\Windows\system.ini" }, true)]
+    [TestCase(new[] { "--json", "true", "--path", @"C:\Windows\system.ini" }, true)]
+    [TestCase(new[] { "--json=false", "--path", @"C:\Windows\system.ini" }, false)]
+    [TestCase(new[] { "--json", "false", "--path", @"C:\Windows\system.ini" }, false)]
+    [TestCase(new[] { "--json", "--json", "--path", @"C:\Windows\system.ini" }, true)]
+    [TestCase(new[] { "--dump-all-handles=false", "--path", @"C:\Windows\system.ini" }, false)]
+    public void Parses_path_options_and_returns_the_action_exit_code(string[] args, bool expectedJson)
+    {
+        CommandLineOptions? options = null;
+        var command = CommandLineOptions.CreateCommand(parsedOptions =>
+        {
+            options = parsedOptions;
+            return 42;
+        });
+
+        var exitCode = command.Parse(args).Invoke();
+
+        Assert.That(exitCode, Is.EqualTo(42));
+        Assert.That(options, Is.Not.Null);
+        Assert.That(options.Path, Is.EqualTo(@"C:\Windows\system.ini"));
+        Assert.That(options.Json, Is.EqualTo(expectedJson));
+        Assert.That(options.DumpAllHandles, Is.False);
     }
 
     [Test]
@@ -85,8 +144,9 @@ public class ProgramTest
         var res = RunHandle2(["--path", @"C:\non_existing_path"]);
 
         Assert.That(res.ExitCode, Is.EqualTo(1));
-        Assert.That(res.StandardOutput, Contains.Substring("Error:"));
-        Assert.That(res.StandardOutput, Contains.Substring("does not exist."));
+        Assert.That(res.StandardError, Contains.Substring(@"C:\non_existing_path"));
+        Assert.That(res.StandardError, Contains.Substring("does not exist."));
+        Assert.That(res.StandardOutput, Contains.Substring("Usage:"));
     }
 
     [Test]
@@ -95,8 +155,9 @@ public class ProgramTest
         var res = RunHandle2(["--path", @"C:\non_existing_path", "--json"]);
 
         Assert.That(res.ExitCode, Is.EqualTo(1));
-        Assert.That(res.StandardOutput, Contains.Substring("Error:"));
-        Assert.That(res.StandardOutput, Contains.Substring("does not exist."));
+        Assert.That(res.StandardError, Contains.Substring(@"C:\non_existing_path"));
+        Assert.That(res.StandardError, Contains.Substring("does not exist."));
+        Assert.That(res.StandardOutput, Contains.Substring("Usage:"));
     }
 
     [TestCase(@"C:\Windows")]

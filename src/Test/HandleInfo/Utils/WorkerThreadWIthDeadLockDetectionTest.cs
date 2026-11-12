@@ -29,7 +29,7 @@ public class WorkerThreadWIthDeadLockDetectionTest
         var result = WorkerThreadWithDeadLockDetection.Run(TimeSpan.FromMilliseconds(100), watchdog =>
         {
             watchdog.Arm();
-            Thread.Sleep(1000);
+            Thread.Sleep(10000);
             watchdog.Disarm();
         });
 
