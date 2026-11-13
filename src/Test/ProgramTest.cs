@@ -15,7 +15,7 @@ public class ProgramTest
     [Test]
     public void Prints_help_when_no_arguments_are_passed()
     {
-        var res = RunHandle2([]);
+        var res = RunHandle2(["--force-english"]);
 
         Assert.That(res.ExitCode, Is.EqualTo(0));
         Assert.That(res.StandardOutput, Contains.Substring("console utility that displays"));
@@ -27,7 +27,7 @@ public class ProgramTest
     [TestCase("-?")]
     public void Prints_help_when_help_parameter_is_passed(string option)
     {
-        var res = RunHandle2([option]);
+        var res = RunHandle2(["--force-english", option]);
 
         Assert.That(res.ExitCode, Is.EqualTo(0));
         Assert.That(res.StandardOutput, Contains.Substring("console utility that displays"));
@@ -41,7 +41,7 @@ public class ProgramTest
     [Test]
     public void Prints_version_without_help_text()
     {
-        var res = RunHandle2(["--version"]);
+        var res = RunHandle2(["--force-english", "--version"]);
         var version = typeof(CommandLineOptions).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion;
 
         Assert.That(res.ExitCode, Is.EqualTo(0));
@@ -68,7 +68,7 @@ public class ProgramTest
     [TestCase(["--dump-all-handles param"])]
     public void Prints_help_and_an_error_message_when_wrong_parameters_are_passed(object[] args)
     {
-        var res = RunHandle2(args.Select(a => a.ToString()!));
+        var res = RunHandle2(args.Select(a => a.ToString()!).Prepend("--force-english").ToArray());
 
         Assert.That(res.ExitCode, Is.EqualTo(1));
         Assert.That(res.StandardOutput, Contains.Substring("console utility that displays"));
@@ -78,7 +78,7 @@ public class ProgramTest
     [Test]
     public void Dump_all_handle_information()
     {
-        var res = RunHandle2(["--dump-all-handles"]);
+        var res = RunHandle2(["--force-english", "--dump-all-handles"]);
 
         Assert.That(res.ExitCode, Is.EqualTo(0));
         Assert.That(res.StandardOutput, ContainsIgnoreCase(@"C:\Windows\system32\sihost.exe"));
@@ -92,7 +92,7 @@ public class ProgramTest
     [Test]
     public void Dump_all_handle_information_json()
     {
-        var res = RunHandle2(["--dump-all-handles", "--json"]);
+        var res = RunHandle2(["--force-english", "--dump-all-handles", "--json"]);
 
         Assert.That(res.ExitCode, Is.EqualTo(0));
         Assert.That(res.StandardOutput, Contains.Substring(@"GrantedAccess"));
@@ -106,7 +106,7 @@ public class ProgramTest
     [Test]
     public void Path_non_locked_file()
     {
-        var res = RunHandle2(["--path", @"C:\Windows\system.ini"]);
+        var res = RunHandle2(["--force-english", "--path", @"C:\Windows\system.ini"]);
 
         Assert.That(res.ExitCode, Is.EqualTo(0));
         Assert.That(res.StandardOutput, Is.Empty);
@@ -141,7 +141,7 @@ public class ProgramTest
     [Test]
     public void Path_that_does_not_exist()
     {
-        var res = RunHandle2(["--path", @"C:\non_existing_path"]);
+        var res = RunHandle2(["--force-english", "--path", @"C:\non_existing_path"]);
 
         Assert.That(res.ExitCode, Is.EqualTo(1));
         Assert.That(res.StandardError, Contains.Substring(@"C:\non_existing_path"));
@@ -152,7 +152,7 @@ public class ProgramTest
     [Test]
     public void Path_json_that_does_not_exist()
     {
-        var res = RunHandle2(["--path", @"C:\non_existing_path", "--json"]);
+        var res = RunHandle2(["--force-english", "--path", @"C:\non_existing_path", "--json"]);
 
         Assert.That(res.ExitCode, Is.EqualTo(1));
         Assert.That(res.StandardError, Contains.Substring(@"C:\non_existing_path"));
@@ -165,7 +165,7 @@ public class ProgramTest
     [TestCase(@"C:/windows")]
     public void Path_locked_folder(string path)
     {
-        var res = RunHandle2(["--path", path]);
+        var res = RunHandle2(["--force-english", "--path", path]);
 
         Assert.That(res.ExitCode, Is.EqualTo(0));
         Assert.That(res.StandardOutput, ContainsIgnoreCase(@"C:\Windows\system32\svchost.exe"));
@@ -179,7 +179,7 @@ public class ProgramTest
     [TestCase(@"C:/windows")]
     public void Path_json_locked_folder(string path)
     {
-        var res = RunHandle2(["--path", path, "--json"]);
+        var res = RunHandle2(["--force-english", "--path", path, "--json"]);
 
         Assert.That(res.ExitCode, Is.EqualTo(0));
         Assert.That(res.StandardOutput, Contains.Substring(@"        ""HandleType"": ""File"","));
@@ -206,11 +206,11 @@ public class ProgramTest
             // This will make sure the file is locked
             using FileStream fileLockedStream = new FileStream(fileLocked, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
            
-            var res = RunHandle2(["--path", file]);
+            var res = RunHandle2(["--force-english", "--path", file]);
             Assert.That(res.ExitCode, Is.EqualTo(0));
             Assert.That(res.StandardOutput, Is.Empty);
 
-            res = RunHandle2(["--path", fileLocked]);
+            res = RunHandle2(["--force-english", "--path", fileLocked]);
             Assert.That(res.ExitCode, Is.EqualTo(0));
             Assert.That(res.StandardOutput, Contains.Substring("fileLocked.txt"));
         }
@@ -236,12 +236,12 @@ public class ProgramTest
             // This will make sure the file is locked
             using FileStream fileLockedStream = new FileStream(file, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 
-            var res = RunHandle2(["--path", file]);
+            var res = RunHandle2(["--force-english", "--path", file]);
             Assert.That(res.ExitCode, Is.EqualTo(0));
             Assert.That(res.StandardOutput, Contains.Substring(file));
 
             // JSON escapes unicode symbols
-            res = RunHandle2(["--json", "--path", file]);
+            res = RunHandle2(["--force-english", "--json", "--path", file]);
             Assert.That(res.ExitCode, Is.EqualTo(0));
             Assert.That(res.StandardOutput, Contains.Substring(@"u043F\u043E\u043B\u044F\u0440\u043D\u044B\u0439 \u0433\u0443\u0441\u044C _ \u5317\u6781\u9E45 _ \u30DB\u30C3\u30AD\u30E7\u30AF\u30AC\u30C1\u30E7\u30A6"));
         }

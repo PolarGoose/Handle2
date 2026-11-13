@@ -4,7 +4,11 @@ using System.Text;
 using System.Text.Json;
 
 Console.OutputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
-return CommandLineOptions.CreateCommand(Run).Parse(args.Length == 0 ? ["--help"] : args).Invoke();
+if (args.Contains("--force-english"))
+{
+    CommandLineOptions.ApplyEnglishCulture();
+}
+return CommandLineOptions.CreateCommand(Run).Parse(args.Length == 0 || ( args.Length == 1 && args[0] == "--force-english" ) ? ["--help"] : args).Invoke();
 
 static int Run(CommandLineOptions options)
 {

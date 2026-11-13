@@ -1,5 +1,6 @@
 using Handle2.HandleInfo.Utils;
 using System.CommandLine;
+using System.Globalization;
 
 namespace Handle2;
 
@@ -8,6 +9,7 @@ internal sealed class CommandLineOptions
     public bool Json { get; private init; }
     public string? Path { get; private init; }
     public bool DumpAllHandles { get; private init; }
+    public bool ForceEnglish { get; private init; }
 
     public static RootCommand CreateCommand(Func<CommandLineOptions, int> action)
     {
@@ -24,6 +26,10 @@ internal sealed class CommandLineOptions
         var dumpAllHandlesOption = new Option<bool>("--dump-all-handles")
         {
             Description = "Displays information about all system handles and modules."
+        };
+        var forceEnglishOption = new Option<bool>("--force-english")
+        {
+            Description = "Forces English output instead of the localized system language."
         };
 
         pathOption.Validators.Add(result =>
@@ -51,7 +57,7 @@ internal sealed class CommandLineOptions
             https://github.com/PolarGoose/Handle2
             """)
         {
-            Options = { jsonOption, pathOption, dumpAllHandlesOption }
+            Options = { jsonOption, pathOption, dumpAllHandlesOption, forceEnglishOption }
         };
         command.Validators.Add(result =>
         {
@@ -60,13 +66,33 @@ internal sealed class CommandLineOptions
                 result.AddError(operationError);
             }
         });
-        command.SetAction(result => action(new CommandLineOptions
+        command.SetAction(result =>
         {
-            Json = result.GetValue(jsonOption),
-            Path = result.GetValue(pathOption),
-            DumpAllHandles = result.GetValue(dumpAllHandlesOption)
-        }));
+            var options = new CommandLineOptions
+            {
+                Json = result.GetValue(jsonOption),
+                Path = result.GetValue(pathOption),
+                DumpAllHandles = result.GetValue(dumpAllHandlesOption),
+                ForceEnglish = result.GetValue(forceEnglishOption)
+            };
+
+            if (options.ForceEnglish)
+            {
+                ApplyEnglishCulture();
+            }
+
+            return action(options);
+        });
 
         return command;
+    }
+
+    public static void ApplyEnglishCulture()
+    {
+        var english = CultureInfo.GetCultureInfo("en-US");
+        CultureInfo.DefaultThreadCurrentCulture = english;
+        CultureInfo.DefaultThreadCurrentUICulture = english;
+        CultureInfo.CurrentCulture = english;
+        CultureInfo.CurrentUICulture = english;
     }
 }
