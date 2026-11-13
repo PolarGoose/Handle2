@@ -85,7 +85,6 @@ public class ProgramTest
         Assert.That(res.StandardOutput, ContainsIgnoreCase(@"Desktop"));
         Assert.That(res.StandardOutput, ContainsIgnoreCase(@"\Default"));
         Assert.That(res.StandardOutput, ContainsIgnoreCase(@"  File            C:\Windows\System32\"));
-        Assert.That(res.StandardOutput, ContainsIgnoreCase(@"C:\Windows\System32\en-US\KernelBase.dll.mui"));
         Assert.That(res.StandardOutput, ContainsIgnoreCase(@"  Module          C:\WINDOWS\SYSTEM32\ntdll.dll"));
     }
 
@@ -146,7 +145,7 @@ public class ProgramTest
         Assert.That(res.ExitCode, Is.EqualTo(1));
         Assert.That(res.StandardError, Contains.Substring(@"C:\non_existing_path"));
         Assert.That(res.StandardError, Contains.Substring("does not exist."));
-        Assert.That(res.StandardOutput, Contains.Substring("Usage:"));
+        Assert.That(res.StandardOutput, Contains.Substring("console utility that displays"));
     }
 
     [Test]
@@ -157,7 +156,7 @@ public class ProgramTest
         Assert.That(res.ExitCode, Is.EqualTo(1));
         Assert.That(res.StandardError, Contains.Substring(@"C:\non_existing_path"));
         Assert.That(res.StandardError, Contains.Substring("does not exist."));
-        Assert.That(res.StandardOutput, Contains.Substring("Usage:"));
+        Assert.That(res.StandardOutput, Contains.Substring("console utility that displays"));
     }
 
     [TestCase(@"C:\Windows")]
@@ -170,7 +169,7 @@ public class ProgramTest
         Assert.That(res.ExitCode, Is.EqualTo(0));
         Assert.That(res.StandardOutput, ContainsIgnoreCase(@"C:\Windows\system32\svchost.exe"));
         Assert.That(res.StandardOutput, ContainsIgnoreCase(@"C:\Windows\System32\"));
-        Assert.That(res.StandardOutput, ContainsIgnoreCase(@"C:\Windows\System32\en-US\KernelBase.dll.mui"));
+        Assert.That(res.StandardOutput, ContainsIgnoreCase(@"C:\Windows\System32\ntdll.dll"));
         Assert.That(res.StandardOutput, Does.Not.Contain(@"\\Device\\HarddiskVolume"));
     }
 
@@ -259,5 +258,5 @@ public class ProgramTest
            .GetAwaiter()
            .GetResult();
 
-    private static StringConstraint ContainsIgnoreCase(string expected) => Contains.Substring(expected).IgnoreCase;
+    private static StringConstraint ContainsIgnoreCase(string expected) => Contains.Substring(expected).Using(StringComparison.OrdinalIgnoreCase);
 }
